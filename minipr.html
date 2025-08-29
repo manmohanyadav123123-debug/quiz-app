@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timed Quiz App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #4CAF50, #2c3e50);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .quiz-container {
+      background: white;
+      width: 400px;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0px 8px 20px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 15px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      background: #f2f2f2;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    .btn:hover {
+      background: #ddd;
+    }
+    .btn.correct {
+      background: #4CAF50;
+      color: white;
+    }
+    .btn.wrong {
+      background: #e74c3c;
+      color: white;
+    }
+    #next-btn {
+      background: #4CAF50;
+      color: white;
+      margin-top: 15px;
+      display: none;
+    }
+    .timer {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div class="timer" id="timer">Time Left: 15s</div>
+    <h2 id="question">Question text</h2>
+    <div id="answer-buttons"></div>
+    <button id="next-btn" class="btn">Next</button>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "Which language runs in a web browser?",
+        answers: [
+          { text: "Java", correct: false },
+          { text: "C", correct: false },
+          { text: "Python", correct: false },
+          { text: "JavaScript", correct: true }
+        ]
+      },
+      {
+        question: "What does HTML stand for?",
+        answers: [
+          { text: "Hyper Text Markup Language", correct: true },
+          { text: "Home Tool Markup Language", correct: false },
+          { text: "Hyperlinks and Text Markup Language", correct: false },
+          { text: "Hyper Tool Multi Language", correct: false }
+        ]
+      },
+      {
+        question: "What year was JavaScript launched?",
+        answers: [
+          { text: "1996", correct: false },
+          { text: "1995", correct: true },
+          { text: "1994", correct: false },
+          { text: "1997", correct: false }
+        ]
+      },
+       {
+        question: "who is known as the father of computer?",
+        answers: [
+          { text: "bill gates", correct: false },
+          { text: "john von neuman", correct: false },
+          { text: "alan turing", correct: false },
+          { text: "charles babbage", correct: true }
+        ]
+      },
+        {
+        question: "what does AI stand for?",
+        answers: [
+          { text: "automatic intelligence", correct: false },
+          { text: "applied itelligence", correct: false },
+          { text: "advanced intelligence", correct: false },
+          { text: "artificial intelligence", correct: true }
+        ]
+      },
+    ];
+
+    const questionElement = document.getElementById("question");
+    const answerButtons = document.getElementById("answer-buttons");
+    const nextButton = document.getElementById("next-btn");
+    const timerElement = document.getElementById("timer");
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timeLeft = 15;
+    let timer;
+
+    function startQuiz() {
+      currentQuestionIndex = 0;
+      score = 0;
+      nextButton.innerHTML = "Next";
+      showQuestion();
+    }
+
+    function startTimer() {
+      clearInterval(timer);
+      timeLeft = 15;
+      timerElement.innerHTML = `Time Left: ${timeLeft}s`;
+      timer = setInterval(() => {
+        timeLeft--;
+        timerElement.innerHTML = `Time Left: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          lockOptions();
+          nextButton.style.display = "block";
+        }
+      }, 1000);
+    }
+
+    function showQuestion() {
+      resetState();
+      let currentQuestion = questions[currentQuestionIndex];
+      questionElement.innerHTML = currentQuestion.question;
+
+      currentQuestion.answers.forEach(answer => {
+        const button = document.createElement("button");
+        button.innerHTML = answer.text;
+        button.classList.add("btn");
+        answerButtons.appendChild(button);
+        if (answer.correct) {
+          button.dataset.correct = answer.correct;
+        }
+        button.addEventListener("click", selectAnswer);
+      });
+
+      startTimer();
+    }
+
+    function resetState() {
+      nextButton.style.display = "none";
+      while (answerButtons.firstChild) {
+        answerButtons.removeChild(answerButtons.firstChild);
+      }
+    }
+
+    function selectAnswer(e) {
+      clearInterval(timer);
+      const selectedBtn = e.target;
+      const isCorrect = selectedBtn.dataset.correct === "true";
+      if (isCorrect) {
+        selectedBtn.classList.add("correct");
+        score++;
+      } else {
+        selectedBtn.classList.add("wrong");
+      }
+      lockOptions();
+      nextButton.style.display = "block";
+    }
+
+    function lockOptions() {
+      Array.from(answerButtons.children).forEach(button => {
+        if (button.dataset.correct === "true") {
+          button.classList.add("correct");
+        }
+        button.disabled = true;
+      });
+    }
+
+    function showScore() {
+      resetState();
+      timerElement.style.display = "none";
+      questionElement.innerHTML = `🎉 You scored ${score} out of ${questions.length}!`;
+      nextButton.innerHTML = "Play Again";
+      nextButton.style.display = "block";
+    }
+
+    function handleNextButton() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < questions.length) {
+        showQuestion();
+      } else {
+        showScore();
+      }
+    }
+
+    nextButton.addEventListener("click", () => {
+      if (currentQuestionIndex < questions.length) {
+        handleNextButton();
+      } else {
+        timerElement.style.display = "block";
+        startQuiz();
+      }
+    });
+
+    startQuiz();
+  </script>
+</body>
+</html>
